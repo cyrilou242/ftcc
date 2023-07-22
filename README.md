@@ -4,11 +4,13 @@
 
 This repository implements a compression based classification technique that is fast at training **AND** 
 at inference. 
-It is an answer to [Low-Resource” Text Classification: A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip).
+It follows [Low-Resource” Text Classification: A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) 
+that received a lot of attention.
 The paper mentions different techniques based on compression, but does not mention the technique implemented in 
 this repository.  
 I suspect the **FTCC** technique in this repository has already been tested in the industry, but I could not find an 
-implementation online, so here you go. I think it is a reasonable baseline for compression based classification.
+implementation online, so here you go. I think it is a reasonable baseline for compression based classification. 
+It is **multiple orders of magnitudes faster** than the compression-based classifier presented in the paper. 
 I'll try to make this package easy to use in the future.
 
 ## Principle
@@ -28,7 +30,7 @@ Then given a input text, I can compare all compressor. The topic of the compress
 best compression ratio is most likely the topic of the input text.
 This collection of compressors is the text classification model.
 
-Formal algorithm:
+Algorithm:
 ##### training
 - Given a dataset of `[(text, class)]`
 - Join texts with the same label together:
@@ -66,63 +68,76 @@ Formal algorithm:
   return predicted_class
   ```
 
+To further improve the algorithm, instead of building a single compressor per class, we build a few 
+of them. For instance, we split a given class text in 3 chunks, and train 1 compressor for each chunk.
+At inference, we take the average of the compression ratio (we could also use a vote approach). 
+This stabilizes the inferences, and small values between 2 and 5 are enough. 
+Below we call the number of **c**ompressors **p**er **c**lass the CPC.
+
 ### Properties
 This technique has the following nice properties:
 - runs on low resources machines easily. 
-  **Training takes a few seconds, inferences less than a milliseconds - on commodity hardware.**
+  **Training takes a few seconds, inferences between 0.1 and 20 milliseconds - on commodity hardware.**
 - you can control the accuracy/model size trade-off easily. 
-  *Because most dictionary based compressor allow to control the size of the compression dictionary.* 
+  *Because most dictionary based compressor allow to control the size of the compression dictionary.*
+- you can control the accuracy/inference speed trade-off easily
+  *By setting the compression level of the compressor. A higher compression level has higher accuracy but is slower.*
+- you can control the accuracy/inference speed trade-off by setting the CPC.
+  *A bigger CPC improves the accuracy and does not make the training slower, only the inference.*
 - you can perform partial - per-class - re-training. 
-  *There is one compressor per class. If a class often has false negative, you can improve the compressor of this class independently of the other compressors.* 
+  *There is one compressor per class. If a class often has false negative, you can improve the compressor of this class independently of the other compressors.*
+- it is fast and different from traditional approaches, so a good candidate for ensembling
+- reproducible. No `random()` here and there.
 
 ## Accuracy performance
 
 ```
-+--------------------------------------------------------------------------------------------------------------------------+
-|             Method             |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|kinnews|
-+--------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
-|FFTC DEFAULT_ZSTD top_1 accuracy| 0.812 |0.663|        0.688       | 0.907 |    0.488   |       0.742      | 0.744| 0.868 |
-+--------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
-|FFTC DEFAULT_ZSTD top_2 accuracy| 0.941 | 1.0 |         1.0        | 0.968 |    0.641   |        1.0       | 0.838| 0.937 |
-+--------------------------------------------------------------------------------------------------------------------------+```
++-------------------------------------------------------------------------------------------------------------+
+|       Method      |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|kinnews|
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
+|FFTC ZSTD_CP9 CPC_1| 0.863 |0.691|        0.716       | 0.931 |    0.534   |       0.771      | 0.783| 0.892 |
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
+|FFTC ZSTD_CP9 CPC_3| 0.896 |0.773|        0.799       | 0.959 |    0.628   |       0.841      | 0.795| 0.883 |
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
+|FFTC ZSTD_CP9 CPC_5| 0.901 | 0.8 |        0.83        | 0.965 |    0.655   |       0.859      | 0.79 | 0.881 |
++-------------------------------------------------------------------------------------------------------------+
 ```
 
-*Some dataset are not included because they have train/test split issues. See [here](https://github.com/bazingagin/npc_gzip/issues/13).*  
-*Some other datasets are not included because the downloader function seemed broken. Help me fix this! See [contribute](#extend-and-contribute)*
+*Some datasets are not included because they have train/test split issues. See [here](https://github.com/bazingagin/npc_gzip/issues/13).*  
+*Some other datasets are not included yet because the downloader function seemed broken. Help me fix this! See [contribute](#extend-and-contribute)*
 
-**CAUTION**   
-`top_k=2` corresponds to the accuracy formula used in [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip).  
-It should only be used to compare performance with this paper. I hope the author will share results for k=1.
-See [issue](https://github.com/bazingagin/npc_gzip/issues/3).
-`top_k=1` correspond to the standard accuracy formula.
+Comparison with [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) (named *gzip* below) on test accuracy: 
 
-**CAUTION**
-Obviously `top_k=2` has a perfect accuracy for binary classification datasets `IMDB`, `AmazonReviewPolarity` and `YelpReviewPolarity`.
-
-Performance are similar or better than the [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) for 
-top 2 accuracy.
-
-| method  | AGNews  | DBpedia  |  YahooAnswers | 20News  |
-|---|---|---|---|---|
-| gzip top2 accuracy  | 0.937  | **0.970**  | 0.638   | 0.685  |
-| FFTC zstd top2  (ours)| **0.941**  | 0.968  |  **0.641**  | **0.838**  |
+| method  | AGNews  | DBpedia  |  YahooAnswers | 20News  | kinnews |
+|---|---|---|---|---|---|
+| gzip top1 |   |   |    |   | 0.835 [1\]  |
+| FFTC ZSTD_CP9 CPC_5 (this project) | 0.901  | 0.965 |  **0.655** [2\]  | **0.79** [2\]  |**0.881** |
 
 **CAUTION** 
-Again, I'd prefer to compare top_k=1 accuracy, but the numbers are not provided in the paper.
+I am not showing top 2 scores from the paper because the implementation leaks the labels at prediction time and overestimates accuracy. See [issue](https://github.com/bazingagin/npc_gzip/issues/3).
+I am currently recomputing top 1 with the provided source code. The gzip method takes hours to run, I'll update the numbers here incrementally. 
+If you have the resources to run for one dataset (16Gb ram VM, 48 hours), please reach out!  
+
+[1] taken from knn1 [here](https://kenschutte.com/gzip-knn-paper/)  
+[2] means *FFTC ZSTD_CP9 CPC_5* already outperforms *gzip*, even with the accuracy overestimate in the *gzip* paper.
 
 ## Speed
 *Below is just to give an idea. Run on my 2021 intel MacBook Pro. Do your own microbenchmark.*
 The computation is multiple orders of magnitudes faster [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip).
 
 ```
-+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|             Method             |                             AG_NEWS                            |                              IMDB                              |                       AmazonReviewPolarity                      |                             DBpedia                             |                           YahooAnswers                          |                        YelpReviewPolarity                       |                             20News                             |                             kinnews                            |
-+--------------------------------+----------------------------------------------------------------+----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+----------------------------------------------------------------+----------------------------------------------------------------+
-|FFTC DEFAULT_ZSTD top_1 accuracy|Training: 2.0s.Inference: p50: 0.022ms,p90: 0.034ms,p99: 0.057ms|Training: 0.9s.Inference: p50: 0.032ms,p90: 0.061ms,p99: 0.112ms| Training: 86.4s.Inference: p50: 0.018ms,p90: 0.034ms,p99: 0.06ms|Training: 11.2s.Inference: p50: 0.178ms,p90: 0.286ms,p99: 0.507ms|Training: 35.9s.Inference: p50: 0.117ms,p90: 0.304ms,p99: 0.779ms|Training: 15.7s.Inference: p50: 0.029ms,p90: 0.074ms,p99: 0.167ms|Training: 0.0s.Inference: p50: 0.728ms,p90: 1.691ms,p99: 6.805ms|Training: 0.0s.Inference: p50: 0.317ms,p90: 0.692ms,p99: 1.424ms|
-+--------------------------------+----------------------------------------------------------------+----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+-----------------------------------------------------------------+----------------------------------------------------------------+----------------------------------------------------------------+
-|FFTC DEFAULT_ZSTD top_2 accuracy| Training: 2.2s.Inference: p50: 0.032ms,p90: 0.046ms,p99: 0.08ms|Training: 0.9s.Inference: p50: 0.038ms,p90: 0.079ms,p99: 0.161ms|Training: 88.5s.Inference: p50: 0.018ms,p90: 0.033ms,p99: 0.065ms|Training: 11.1s.Inference: p50: 0.161ms,p90: 0.246ms,p99: 0.314ms|Training: 35.8s.Inference: p50: 0.115ms,p90: 0.296ms,p99: 0.727ms|Training: 15.5s.Inference: p50: 0.025ms,p90: 0.057ms,p99: 0.127ms|Training: 0.0s.Inference: p50: 0.746ms,p90: 1.774ms,p99: 7.031ms|Training: 0.0s.Inference: p50: 0.317ms,p90: 0.753ms,p99: 1.512ms|
-+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+```
-
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|       Method      |AG_NEWS_train|AG_NEWS_predict_p90|IMDB_train|IMDB_predict_p90|AmazonReviewPolarity_train|AmazonReviewPolarity_predict_p90|DBpedia_train|DBpedia_predict_p90|YahooAnswers_train|YahooAnswers_predict_p90|YelpReviewPolarity_train|YelpReviewPolarity_predict_p90|20News_train|20News_predict_p90|kinnews_train|kinnews_predict_p90|
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
+|FFTC ZSTD_CP9 CPC_1|     2.7s    |      0.163ms      |   1.2s   |     0.363ms    |           83.3s          |             0.101ms            |    12.3s    |      0.589ms      |       33.7s      |         0.863ms        |          13.9s         |            0.181ms           |    0.3s    |      4.37ms      |     0.1s    |      2.085ms      |
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
+|FFTC ZSTD_CP9 CPC_3|     2.2s    |      0.304ms      |   1.0s   |     0.981ms    |           79.8s          |             0.361ms            |    13.7s    |       2.13ms      |       40.6s      |         3.515ms        |          14.9s         |            0.813ms           |    0.3s    |     14.022ms     |     0.1s    |       7.68ms      |
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
+|FFTC ZSTD_CP9 CPC_5|     2.6s    |      0.778ms      |   1.1s   |     2.347ms    |           85.5s          |             0.736ms            |    13.2s    |      3.719ms      |       40.1s      |         6.282ms        |          16.6s         |            1.363ms           |    0.3s    |     25.533ms     |     0.1s    |      13.71ms      |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+As expected, the bigger the CPC, the bigger the prediction time.
+Training time is almost not impacted.
 
 ## Reproduce
 Requirements
@@ -137,12 +152,24 @@ pip install -r requirements.txt
 
 Reproduce
 ```
-python main.py --top_k_accuracy 1 --top_k_accuracy 2
+python main.py
 ```
+This trains and evaluates 24 models, so this takes some time - around 30 minutes on commodity hardware.  
+To get started, you should start with below:
 
-Run on a few datasets
+Run with some datasets
 ```
 python main.py -d AG_NEWS -d IMDB
+```
+
+Run with some compressors
+```
+python main.py -d AG_NEWS -c ZSTD_CP3 -c ZSTD_CP9
+```
+
+Run with some CPC 
+```
+python main.py -d AG_NEWS -cpc 1 -cpc 3
 ```
 
 For more configuration knobs, run 
@@ -154,9 +181,12 @@ python main.py --help
 - implement dataset download functions. Some seemed broken in https://github.com/bazingagin/npc_gzip
 - pytorch is extremely slow and not necessary in this project, we should remove it
 - once the above is done, we can make this a library
+- add remove stopwords
 - add more compressors! 
 - add more datasets!
-- tune the zstd compressor parameters!
+- predictions are cheap: ensemble!
+- optimize the prediction time when CPC > 1
+- improve decision making when CPC > 1
 - the string concatenation is the slowest part. I suspect it could greatly be improved.
 
 
