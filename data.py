@@ -212,7 +212,7 @@ def load_ohsumed(data_directory: str, split: float = 0.9) -> tuple:
     return train_ds, test_ds
 
 
-def load_r8(data_directory: str, delimiter: str = "\t") -> tuple:
+def load_reuters(data_directory: str, delimiter: str = "\t") -> tuple:
     """
     Loads the R8 dataset.
 

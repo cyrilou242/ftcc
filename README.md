@@ -90,17 +90,16 @@ This technique has the following nice properties:
 - reproducible. No `random()` here and there.
 
 ## Accuracy performance
-
 ```
-+-------------------------------------------------------------------------------------------------------------+
-|       Method      |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|kinnews|
-+-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
-|FFTC ZSTD_CP9 CPC_1| 0.863 |0.691|        0.716       | 0.931 |    0.534   |       0.771      | 0.783| 0.892 |
-+-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
-|FFTC ZSTD_CP9 CPC_3| 0.896 |0.773|        0.799       | 0.959 |    0.628   |       0.841      | 0.795| 0.883 |
-+-------------------+-------+-----+--------------------+-------+------------+------------------+------+-------+
-|FFTC ZSTD_CP9 CPC_5| 0.901 | 0.8 |        0.83        | 0.965 |    0.655   |       0.859      | 0.79 | 0.881 |
-+-------------------------------------------------------------------------------------------------------------+
++-------------------------------------------------------------------------------------------------------------------------+
+|       Method      |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|  R8 | R52 |kinnews|
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 CPC_1| 0.863 |0.691|        0.716       | 0.931 |    0.534   |       0.771      | 0.783|0.917|0.846| 0.892 |
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 CPC_3| 0.896 |0.773|        0.799       | 0.959 |    0.628   |       0.841      | 0.795|0.935|0.007| 0.883 |
++-------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 CPC_5| 0.901 | 0.8 |        0.83        | 0.965 |    0.655   |       0.859      | 0.79 |0.937|0.001| 0.881 |
++-------------------------------------------------------------------------------------------------------------------------+
 ```
 
 *Some datasets are not included because they have train/test split issues. See [here](https://github.com/bazingagin/npc_gzip/issues/13).*  
@@ -108,10 +107,11 @@ This technique has the following nice properties:
 
 Comparison with [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) (named *gzip* below) on test accuracy: 
 
-| method  | AGNews  | DBpedia  |  YahooAnswers | 20News  | kinnews |
-|---|---|---|---|---|---|
-| gzip top1 |   |   |    |   | 0.835 [1\]  |
-| FFTC ZSTD_CP9 CPC_5 (this project) | 0.901  | 0.965 |  **0.655** [2\]  | **0.79** [2\]  |**0.881** |
+| method  | AGNews  | DBpedia  |  YahooAnswers | 20News  | kinnews | R8 | R52 |
+|---|---|---|---|---|---|---|---|
+| gzip top1 |   |   |    |   | 0.835 [1\]  |   | |
+| FFTC ZSTD_CP9 CPC_5 (this project) | 0.901  | 0.965 |  **0.655** [2\]  | **0.79** [2\]  |**0.881** | 0.937 | NA [3] |
+| FFTC ZSTD_CP9 CPC_1 (this project) |   |  |    |   | |  | 0.846 |
 
 **CAUTION** 
 I am not showing top 2 scores from the paper because the implementation leaks the labels at prediction time and overestimates accuracy. See [issue](https://github.com/bazingagin/npc_gzip/issues/3).
@@ -120,24 +120,25 @@ If you have the resources to run for one dataset (16Gb ram VM, 48 hours), please
 
 [1] taken from knn1 [here](https://kenschutte.com/gzip-knn-paper/)  
 [2] means *FFTC ZSTD_CP9 CPC_5* already outperforms *gzip*, even with the accuracy overestimate in the *gzip* paper.
+[3] having CPC > 1 is not relevant for 52 categories with the little amount of data for some class, or requires a more subtle implementation, with cpc depending on the number of observations for each class
 
 ## Speed
 *Below is just to give an idea. Run on my 2021 intel MacBook Pro. Do your own microbenchmark.*
 The computation is multiple orders of magnitudes faster [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip).
 
 ```
-+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-|       Method      |AG_NEWS_train|AG_NEWS_predict_p90|IMDB_train|IMDB_predict_p90|AmazonReviewPolarity_train|AmazonReviewPolarity_predict_p90|DBpedia_train|DBpedia_predict_p90|YahooAnswers_train|YahooAnswers_predict_p90|YelpReviewPolarity_train|YelpReviewPolarity_predict_p90|20News_train|20News_predict_p90|kinnews_train|kinnews_predict_p90|
-+-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
-|FFTC ZSTD_CP9 CPC_1|     2.7s    |      0.163ms      |   1.2s   |     0.363ms    |           83.3s          |             0.101ms            |    12.3s    |      0.589ms      |       33.7s      |         0.863ms        |          13.9s         |            0.181ms           |    0.3s    |      4.37ms      |     0.1s    |      2.085ms      |
-+-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
-|FFTC ZSTD_CP9 CPC_3|     2.2s    |      0.304ms      |   1.0s   |     0.981ms    |           79.8s          |             0.361ms            |    13.7s    |       2.13ms      |       40.6s      |         3.515ms        |          14.9s         |            0.813ms           |    0.3s    |     14.022ms     |     0.1s    |       7.68ms      |
-+-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+-------------+-------------------+
-|FFTC ZSTD_CP9 CPC_5|     2.6s    |      0.778ms      |   1.1s   |     2.347ms    |           85.5s          |             0.736ms            |    13.2s    |      3.719ms      |       40.1s      |         6.282ms        |          16.6s         |            1.363ms           |    0.3s    |     25.533ms     |     0.1s    |      13.71ms      |
-+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|       Method      |AG_NEWS_train|AG_NEWS_predict_p90|IMDB_train|IMDB_predict_p90|AmazonReviewPolarity_train|AmazonReviewPolarity_predict_p90|DBpedia_train|DBpedia_predict_p90|YahooAnswers_train|YahooAnswers_predict_p90|YelpReviewPolarity_train|YelpReviewPolarity_predict_p90|20News_train|20News_predict_p90|R8_train|R8_predict_p90|R52_train|R52_predict_p90|kinnews_train|kinnews_predict_p90|
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 CPC_1|     2.3s    |      0.101ms      |   1.1s   |     0.315ms    |           88.4s          |             0.105ms            |    12.3s    |      0.589ms      |       35.1s      |         0.953ms        |          14.3s         |            0.197ms           |    0.3s    |      4.603ms     |  0.0s  |    0.569ms   |   0.1s  |    4.521ms    |     0.1s    |      2.113ms      |
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 CPC_3|     2.3s    |      0.319ms      |   1.0s   |     1.068ms    |           78.8s          |             0.363ms            |    12.1s    |      1.971ms      |       38.4s      |         3.844ms        |          15.6s         |            0.702ms           |    0.3s    |     14.917ms     |  0.0s  |    1.785ms   |   0.1s  |    14.149ms   |     0.1s    |      8.487ms      |
++-------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 CPC_5|     2.6s    |      0.691ms      |   1.1s   |     2.35ms     |           89.0s          |             0.736ms            |    13.1s    |      3.734ms      |       42.5s      |         6.299ms        |          17.9s         |            1.29ms            |    0.3s    |     24.594ms     |  0.0s  |    3.555ms   |   0.1s  |    20.264ms   |     0.1s    |      12.496ms     |
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 ```
-As expected, the bigger the CPC, the bigger the prediction time.
-Training time is almost not impacted.
+As expected, the bigger the CPC, the bigger the prediction time, especially when the number of classes is big.
+Training time is almost not impacted. 
 
 ## Reproduce
 Requirements
@@ -154,7 +155,7 @@ Reproduce
 ```
 python main.py
 ```
-This trains and evaluates 24 models, so this takes some time - around 30 minutes on commodity hardware.  
+This trains and evaluates 30 models, so this takes some time - around 35 minutes on commodity hardware.  
 To get started, you should start with below:
 
 Run with some datasets
@@ -187,7 +188,8 @@ python main.py --help
 - predictions are cheap: ensemble!
 - optimize the prediction time when CPC > 1
 - improve decision making when CPC > 1
-- the string concatenation is the slowest part. I suspect it could greatly be improved.
+- the string concatenation is the slowest part in the training. I suspect it could greatly be improved.
+- change the loop order to avoid re-loading datasets - make dataset the outerloop
 
 
 ## Troubleshooting

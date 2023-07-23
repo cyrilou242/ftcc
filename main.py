@@ -8,7 +8,7 @@ from torchtext.datasets import AG_NEWS, IMDB, AmazonReviewPolarity, DBpedia, Sog
 
 from compressorclassifier import CompressorClassifier
 from compressors.zstd_compressor import ZstdCompressor
-from data import load_20news, load_ohsumed, load_ohsumed_single, load_r8, load_kinnews_kirnews, load_swahili, \
+from data import load_20news, load_ohsumed, load_ohsumed_single, load_reuters, load_kinnews_kirnews, load_swahili, \
     load_filipino
 
 DATA_DIR = "data"
@@ -29,13 +29,10 @@ DATASET_TO_LOADER = {
     # FIXME CYRIL need to implement a proper downloader
     # "Ohsumed": lambda: load_ohsumed(os.path.join(DATA_DIR, "Ohsumed")),
     # "Ohsumed_single": lambda: load_ohsumed_single(os.path.join(DATA_DIR, "Ohsumed_single")),
-    # FIXME CYRIL need to implement a proper downloader
-    # "R8": lambda: load_r8(os.path.join(DATA_DIR, "R8")),
-    # fixme cyril not sure to understand why this is the same loader
-    # FIXME CYRIL need to implement a proper downloader
-    # "R52": lambda: load_r8(os.path.join(DATA_DIR, "R52")),
+    "R8": lambda: load_reuters(os.path.join(DATA_DIR, "R8")),
+    "R52": lambda: load_reuters(os.path.join(DATA_DIR, "R52")),
     # FIXME need to implement downloader from https://s3.us-east-2.amazonaws.com/blaisecruz.com/datasets/dengue/dengue_raw.zip
-    # FIXME CYRIL - dataset is contaminated - https://github.com/bazingagin/npc_gzip/issues/13
+    # FIXME CYRIL - hugging face dataset is contaminated - https://github.com/bazingagin/npc_gzip/issues/13
     "kinnews": lambda: load_kinnews_kirnews(
         dataset_name="kinnews_kirnews", data_split="kirnews_cleaned"
     ),
@@ -90,13 +87,13 @@ def run_experiment(dataset, compressor, top_k_accuracy, compressors_per_class):
                     dataset_pair = loader()
                     train_pair, test_pair = dataset_pair[0], dataset_pair[1]
 
-                    print(f"Training classifier for dataset {d}.")
+                    print(f"Training classifier {method_name} for dataset {d}.")
                     classifier = CompressorClassifier(lambda: ZstdCompressor(), k, num_compressors_per_class=cpc)
                     start = time.monotonic()
                     classifier.fit(train_pair)
                     training_time = time.monotonic() - start
 
-                    print(f"Running evaluation for dataset {d}.")
+                    print(f"Running evaluation for classifier {method_name} for dataset {d}.")
                     run_times_millis = []
                     obs_count = 0
                     correct_obs_count = 0
