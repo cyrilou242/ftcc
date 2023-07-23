@@ -29,7 +29,7 @@ class CompressorClassifier:
             compressors = []
             step = ceil(len(texts) / self.num_compressors_per_class)
             for i in range(0, len(texts), step):
-                compressor = self.compressor_provider().fit('\n'.join(texts[i:i + step]))
+                compressor = self.compressor_provider().fit(texts[i:i + step])
                 compressors.append(compressor)
             self.label_to_compressors[label] = compressors
 
@@ -46,3 +46,10 @@ class CompressorClassifier:
             label_to_score.pop(predicted)
             res.append(predicted)
         return res
+
+    def dictionaries_size(self) -> int:
+        s = 0
+        for compressors in self.label_to_compressors.values():
+            for c in compressors:
+                s += c.dictionary_size()
+        return s
