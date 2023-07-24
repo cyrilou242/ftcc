@@ -4,7 +4,7 @@
 
 This repository implements a compression based classification technique that is fast at training **AND** 
 at inference. 
-It follows [Low-Resource” Text Classification: A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) (referred as the *gzip method* from now on)
+It is a reaction to [Low-Resource” Text Classification: A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) (referred as the *gzip method* from now on)
 that received a lot of attention.
 The paper mentions different techniques based on compression, but does not mention the technique implemented in 
 this repository.  
@@ -12,7 +12,12 @@ I suspect the **FTCC** technique in this repository has already been tested in t
 implementation online, so here you go. I think it is a reasonable baseline for compression based classification. 
 It is **multiple orders of magnitudes faster** than *the gzip method* and the other compression-based classifiers mentioned in the paper, 
 and has comparable accuracy (*yet to validate*).
-I'll try to make this package easy to use in the future.
+
+## Nothing new there
+Indeed. The idea has been [known for ages](http://aima.cs.berkeley.edu/3rd-ed/). It is also likely that a well-built tf-idf could outperform this method (contributions welcome). 
+The goal of this repo is to provide a correct baseline for compression-based method that is simple and fast to reproduce.
+A compression-based method should either have a significantly better accuracy or a similar accuracy with 
+better compute/memory performance.
 
 ## Principle
 Some compressor implementation, such as `zstd`, can generate a compression dictionary from data.
