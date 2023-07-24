@@ -347,7 +347,7 @@ If you use FTCC in your publication, please cite it by using the following BibTe
 @Misc{peft,
   title =        {FTCC: Fast Text Classification with Compressors dictionary},
   author =       {Cyril de Catheu},
-  howpublished = {\url{https://github.com/cyrilou242/peft}},
+  howpublished = {\url{https://github.com/cyrilou242/ftcc}},
   year =         {2023}
 }
 ```
