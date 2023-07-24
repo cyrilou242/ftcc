@@ -310,6 +310,7 @@ python main.py --help
 - add remove stopwords
 - add more compressors! 
 - add more datasets!
+- add ohsumed dataset - https://github.com/bazingagin/npc_gzip/issues/17
 - improve the evaluation loop, it's slow! 
 - improve logs! 
 - predictions are cheap: ensemble!
