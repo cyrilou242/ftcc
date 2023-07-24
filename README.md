@@ -344,7 +344,7 @@ ln -s /etc/ssl/* /Library/Frameworks/Python.framework/Versions/3.7/etc/openssl
 If you use FTCC in your publication, please cite it by using the following BibTeX entry.
 
 ```
-@Misc{peft,
+@Misc{ftcc,
   title =        {FTCC: Fast Text Classification with Compressors dictionary},
   author =       {Cyril de Catheu},
   howpublished = {\url{https://github.com/cyrilou242/ftcc}},
