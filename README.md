@@ -170,21 +170,73 @@ a few megabytes only. Also, this corresponds to the *gzip method* setup.
 Performance are a bit worse, while staying reasonable. The training time is bigger, but the model size is smaller than 
 the whole training set size.
 
-**WIP - benchmark coming soon.**
-
 #### Accuracy
-**WIP - benchmark coming soon.**
+```
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+|                   Method                   |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|  R8 | R52 |kinnews|
++--------------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_1| 0.864 |0.708|        0.704       |  0.92 |    0.528   |       0.756      | 0.773|0.914|0.838| 0.818 |
++--------------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_3|  0.89 | 0.77|        0.788       | 0.955 |    0.622   |       0.834      | 0.773|0.928|0.002| 0.826 |
++--------------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_5| 0.896 |0.799|        0.821       |  0.96 |    0.649   |       0.863      | 0.769|0.924|0.001| 0.853 |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+Roughly between 1 and 2 percentage points are lost for each method. 
 
 #### Speed
 *Below is just to give an idea. Run on my 2021 intel MacBook Pro. Do your own microbenchmark.*
-**WIP - benchmark coming soon.**
+
+```
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                   Method                   |AG_NEWS_train|AG_NEWS_predict_p90|IMDB_train|IMDB_predict_p90|AmazonReviewPolarity_train|AmazonReviewPolarity_predict_p90|DBpedia_train|DBpedia_predict_p90|YahooAnswers_train|YahooAnswers_predict_p90|YelpReviewPolarity_train|YelpReviewPolarity_predict_p90|20News_train|20News_predict_p90|R8_train|R8_predict_p90|R52_train|R52_predict_p90|kinnews_train|kinnews_predict_p90|
++--------------------------------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_1|    26.3s    |      0.179ms      |   27.6s  |     0.344ms    |          891.4s          |             0.093ms            |    121.6s   |      0.489ms      |      470.1s      |         0.795ms        |         216.1s         |            0.166ms           |    14.8s   |      4.034ms     |  2.4s  |    0.538ms   |   3.2s  |    4.212ms    |     2.4s    |      1.945ms      |
++--------------------------------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_3|    22.7s    |      0.283ms      |   22.9s  |     0.917ms    |          1474.6s         |             0.613ms            |    287.9s   |      3.247ms      |      1322.8s     |         4.864ms        |         871.8s         |             1.7ms            |    50.2s   |     35.201ms     |  12.0s |    7.165ms   |  14.5s  |    34.682ms   |    12.3s    |      17.665ms     |
++--------------------------------------------+-------------+-------------------+----------+----------------+--------------------------+--------------------------------+-------------+-------------------+------------------+------------------------+------------------------+------------------------------+------------+------------------+--------+--------------+---------+---------------+-------------+-------------------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_5|    61.4s    |      0.957ms      |   58.3s  |     3.244ms    |          2017.7s         |             1.536ms            |    337.7s   |      5.771ms      |      1074.1s     |        10.738ms        |         752.4s         |            2.032ms           |    38.6s   |      41.63ms     |  6.3s  |    6.445ms   |   8.6s  |    33.346ms   |     9.8s    |      23.899ms     |
++--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+Training is now a few minutes because of the dictionary training.
 
 #### Model size
+```
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                   Method                   |   AG_NEWS  |    IMDB    |AmazonReviewPolarity|   DBpedia   | YahooAnswers|YelpReviewPolarity|   20News   |     R8    |    R52    |  kinnews  |
++--------------------------------------------+------------+------------+--------------------+-------------+-------------+------------------+------------+-----------+-----------+-----------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_1|17.568384 Mb|11.067007 Mb|    12.018115 Mb    | 73.808126 Mb| 56.404952 Mb|   13.149491 Mb   |16.098017 Mb| 2.50625 Mb|3.441763 Mb|1.445467 Mb|
++--------------------------------------------+------------+------------+--------------------+-------------+-------------+------------------+------------+-----------+-----------+-----------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_3|25.496669 Mb|23.231406 Mb|     35.56142 Mb    |125.385563 Mb|163.297462 Mb|   38.984491 Mb   |22.323596 Mb|3.128363 Mb|3.990758 Mb|2.130884 Mb|
++--------------------------------------------+------------+------------+--------------------+-------------+-------------+------------------+------------+-----------+-----------+-----------+
+|FFTC ZSTD_CL9 size_unbounded_optimized CPC_5|27.610126 Mb|29.415687 Mb|     59.45308 Mb    |144.977827 Mb|265.284513 Mb|   66.247472 Mb   |25.642043 Mb|3.249029 Mb| 4.16616 Mb|2.742979 Mb|
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+#### Compression analysis
+Consider the datasets with the biggest training set size:
+AmazonReviewPolarity:
+
+|   | Accuracy  | Size  | Training Time | Inference speed p90|
+|---|---|---|---|---|
+| FFTC ZSTD_CL9 dataset_prefixed CPC_5  | 0.83  | 1553.96 Mb  | 109.8s [1] | 1.536ms |
+| FFTC ZSTD_CL9 size_unbounded_optimized CPC_5  | 0.821  | 59.45 Mb  | 2017.7s | 1.536ms |
+
+[1] the time is actually spent joining the train examples together. Python is really slow at doing this. This could easily be optimized.   
+
+**Main result**:
+We built a solution that shows the learning/generalization potential of compression dictionary based method.
+We compress a 1.5Gb model in a 60Mb model - a 59 compression ratio - while only losing 1 percentage point of accuracy.
+The inference time is not impacted by this compression, it stays fast.
+Results are similar for YahooAnswers and Yelp with smaller compression ratio.  
+This suggests that compression dictionary training scales well and should be explored on bigger datasets. 
+For smaller datasets, keeping the whole dataset as a dictionary prefix is simple and results in extremely fast training and inference.
 
 ### Notes on performance
 In the benchmark above we used a compression level of 9. Compression level can go up to 22. 
 I have observed that compression level up to 18 will give significant performance improvements. It 
-makes training and inference slower though. Try and benchmark yourself if need be.
+makes training and inference slower though. Try and benchmark yourself if need be. Setting 
+the compression level up to 12 is an easy way to get better accuracy performance with a minor speed deterioration.
 
 ## Reproduce
 Requirements
@@ -197,22 +249,25 @@ Install
 pip install -r requirements.txt
 ```
 
-Reproduce: with whole training dataset maintained in memory (`dataset_prefixed` mode).  
+### Reproduce: with training dataset maintained in memory (`dataset_prefixed` mode).  
 Recommended to compare performance with the *gzip method*, or with setups that can afford to maintain the whole training dataset in memory (eg small dataset).
 ```
 python main.py -s -1
 ```
+This will train and evaluate for 30 models, so this takes some time - around 40 minutes on commodity hardware.
+The slow evaluation is caused by the AmazonReviewPolarity dataset that has 400000k.
+See how to select the dataset, compressors, cpc and size constraint below.
 
-Reproduce - with unbounded model size (`size_unbounded_optimized`).  
+### Reproduce - with compressed dictionary (`size_unbounded_optimized`).  
 Recommended to compare performance with setups that can't afford to keep the whole training data in memory (big datasets, memory constraints or interested by the "learning" side of compression).  
 ```
 python main.py -s 0
 ```
+This will train and evaluate for 30 models. Training takes some time with this mode because the dictionary is compressed.
+This should take around 4 hours on commodity hardware. 
+See how to select the dataset, compressors, cpc and size constraint below.
 
-This will train and evaluate for 30 models, so this takes some time - around 40 minutes on commodity hardware.
-The slow evaluation is caused by the AmazonReviewPolarity dataset that has 400000k.
-See how to select the dataset, compressors, cpc and size constraint below. 
-
+### Run specific configurations
 Run on specific datasets
 ```
 python main.py -d AG_NEWS -d IMDB
