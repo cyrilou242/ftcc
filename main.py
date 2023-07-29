@@ -8,8 +8,7 @@ from torchtext.datasets import AG_NEWS, IMDB, AmazonReviewPolarity, DBpedia, Sog
 
 from compressorclassifier import CompressorClassifier
 from compressors.zstd_compressor import ZstdCompressor
-from data import load_20news, load_ohsumed, load_ohsumed_single, load_reuters, load_kinnews_kirnews, load_swahili, \
-    load_filipino
+from data import load_20news, load_ohsumed_single_23, load_reuters, load_kinnews_kirnews
 
 DATA_DIR = "data"
 
@@ -26,11 +25,9 @@ DATASET_TO_LOADER = {
     # on mac OS, you may have to run something like: ln -s /etc/ssl/* /Library/Frameworks/Python.framework/Versions/3.7/etc/openssl
     # to fix urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1091)>
     "20News": load_20news,
-    # FIXME CYRIL need to implement a proper downloader
-    # "Ohsumed": lambda: load_ohsumed(os.path.join(DATA_DIR, "Ohsumed")),
-    # "Ohsumed_single": lambda: load_ohsumed_single(os.path.join(DATA_DIR, "Ohsumed_single")),
     "R8": lambda: load_reuters(os.path.join(DATA_DIR, "R8")),
     "R52": lambda: load_reuters(os.path.join(DATA_DIR, "R52")),
+    "Ohsumed": lambda: load_ohsumed_single_23(os.path.join(DATA_DIR, "ohsumed_single_23")),
     # FIXME need to implement downloader from https://s3.us-east-2.amazonaws.com/blaisecruz.com/datasets/dengue/dengue_raw.zip
     # FIXME CYRIL - hugging face dataset is contaminated - https://github.com/bazingagin/npc_gzip/issues/13
     "kinnews": lambda: load_kinnews_kirnews(

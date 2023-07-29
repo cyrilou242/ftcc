@@ -103,15 +103,15 @@ This means the model has the same size as the training input. This corresponds t
 
 #### Accuracy
 ```
-+------------------------------------------------------------------------------------------------------------------------------------------+
-|               Method               |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|  R8 | R52 |kinnews|
-+------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
-|FFTC ZSTD_CL9 dataset_prefixed CPC_1| 0.863 |0.691|        0.716       | 0.931 |    0.534   |       0.771      | 0.783|0.917|0.846| 0.892 |
-+------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
-|FFTC ZSTD_CL9 dataset_prefixed CPC_3| 0.896 |0.773|        0.799       | 0.959 |    0.628   |       0.841      | 0.795|0.935|0.007| 0.883 |
-+------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+
-|FFTC ZSTD_CL9 dataset_prefixed CPC_5| 0.901 | 0.8 |        0.83        | 0.965 |    0.655   |       0.859      | 0.79 |0.937|0.001| 0.881 |
-+------------------------------------------------------------------------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+|               Method               |AG_NEWS| IMDB|AmazonReviewPolarity|DBpedia|YahooAnswers|YelpReviewPolarity|20News|  R8 | R52 |Ohsumed|kinnews|
++------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+-------+
+|FFTC ZSTD_CL9 dataset_prefixed CPC_1| 0.863 |0.691|        0.716       | 0.931 |    0.534   |       0.771      | 0.783|0.917|0.846| 0.478 | 0.892 |
++------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+-------+
+|FFTC ZSTD_CL9 dataset_prefixed CPC_3| 0.896 |0.773|        0.799       | 0.959 |    0.628   |       0.841      | 0.795|0.935|0.007| 0.424 | 0.883 |
++------------------------------------+-------+-----+--------------------+-------+------------+------------------+------+-----+-----+-------+-------+
+|FFTC ZSTD_CL9 dataset_prefixed CPC_5| 0.901 | 0.8 |        0.83        | 0.965 |    0.655   |       0.859      | 0.79 |0.937|0.001| 0.386 | 0.881 |
++--------------------------------------------------------------------------------------------------------------------------------------------------+
 ```
 
 *Some datasets are not included because they have train/test split issues. See [here](https://github.com/bazingagin/npc_gzip/issues/13).*  
@@ -119,21 +119,21 @@ This means the model has the same size as the training input. This corresponds t
 
 Comparison with [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip) (referred as *gzip method* below) on test accuracy: 
 
-| method                                              | AGNews | DBpedia | YahooAnswers   | 20News        | kinnews    | R8    | R52    |
-|-----------------------------------------------------|--------|---------|----------------|---------------|------------|-------|--------|
-| gzip method top1                                    |        |         |                |               | 0.835 [1\] |       |        |
-| FFTC ZSTD_CL9 dataset_prefixed CPC_5 (this project) | 0.901  | 0.965   | **0.655** [2\] | **0.79** [2\] | **0.881**  | 0.937 | NA [3] |
-| FFTC ZSTD_CL9 dataset_prefixed CPC_1 (this project) |        |         |                |               |            |       | 0.846  |
+| method                                              | AGNews  | DBpedia  | YahooAnswers   | 20News        | kinnews    | R8      | R52        | Ohsumed   |
+|-----------------------------------------------------|---------|----------|----------------|---------------|------------|---------|------------|-----------|
+| gzip method knn1                                    | 0.876   | 0.942    |  0.485         |   0.607       | 0.858      | 0.913   |  **0.852** | 0.365     |
+| FFTC ZSTD_CL9 dataset_prefixed CPC_5 (this project) |**0.901**| **0.965**| **0.655**      | **0.79**      | **0.881**  |**0.937**| NA [3]     |0.386 [3]  |
+| FFTC ZSTD_CL9 dataset_prefixed CPC_1 (this project) |         |          |                |               |            |         | 0.846      | **0.478** |
 
+ 
+I am not showing top 2 scores from the paper because the implementation leaks the labels at prediction time and overestimates accuracy. See [issue](https://github.com/bazingagin/npc_gzip/issues/3).  
+Accuracy results of gzip method with knn1 from Ken Schutte work. See [https://kenschutte.com/gzip-knn-paper](https://kenschutte.com/gzip-knn-paper) 
+and [https://kenschutte.com/gzip-knn-paper2](https://kenschutte.com/gzip-knn-paper2)  
+[3] having CPC > 1 is not relevant if there are many categories and few observations for some categories It would require a more subtle implementation, with cpc depending on the number of observations for each class
 
-**CAUTION** 
-I am not showing top 2 scores from the paper because the implementation leaks the labels at prediction time and overestimates accuracy. See [issue](https://github.com/bazingagin/npc_gzip/issues/3).
-I am currently recomputing top 1 with the provided source code. The gzip method takes hours to run, I'll update the numbers here incrementally. 
-If you have the resources to run for one dataset (16Gb ram VM, 48 hours), please reach out!  
-
-[1] taken from knn1 [here](https://kenschutte.com/gzip-knn-paper/)  
-[2] means *FFTC ZSTD_CP9 CPC_5* already outperforms *gzip*, even with the accuracy overestimate in the *gzip* paper.  
-[3] having CPC > 1 is not relevant for 52 categories with the little amount of data for some class, or requires a more subtle implementation, with cpc depending on the number of observations for each class
+As shown above, ftcc beats the gzip method on all datasets except R52. 
+For R52, because there are classes with few examples, learning is difficult and the brute force approach of gzip gets the advantage. 
+Still, it is trivial to have the same level of performance by using a compression level of 12 instead of 9 (`python main.py -d R52 -cpc 1 -c ZSTD_CL12`).   
 
 #### Speed
 *Below is just to give an idea. Run on my 2021 intel MacBook Pro, with tons of apps running at the same time. Do your own microbenchmark.*

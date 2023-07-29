@@ -142,16 +142,14 @@ def load_20news():
     return train_ds, test_ds
 
 
-def load_ohsumed_single(local_directory: str) -> tuple:
+def load_ohsumed_single_23(data_directory: str) -> tuple:
     """
-    Loads the Ohsumed dataset from `local_directory`
+    Loads the Ohsumed dataset from `data_directory`
     assumes the existence of subdirectories `training`
     and `test`.
 
-    :ref: https://paperswithcode.com/dataset/ohsumed
-
     Arguments:
-        local_directory (str): Local path to directory containing the Ohsumed
+        data_directory (str): Local path to directory containing the Ohsumed
                                `training` and `test` subdirectories.
 
     Returns:
@@ -174,8 +172,8 @@ def load_ohsumed_single(local_directory: str) -> tuple:
                         dataset.append((label, text))
         return dataset
 
-    train_dir = os.path.join(local_directory, "training")
-    test_dir = os.path.join(local_directory, "test")
+    train_dir = os.path.join(data_directory, "training")
+    test_dir = os.path.join(data_directory, "test")
     train_ds, test_ds = process(train_dir), process(test_dir)
     return train_ds, test_ds
 
