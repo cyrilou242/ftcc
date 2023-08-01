@@ -129,15 +129,15 @@ Comparison with [A Parameter-Free Classification Method with Compressors](https:
 I am not showing top 2 scores from the paper because the implementation leaks the labels at prediction time and overestimates accuracy. See [issue](https://github.com/bazingagin/npc_gzip/issues/3).  
 Accuracy results of gzip method with knn1 from Ken Schutte work. See [https://kenschutte.com/gzip-knn-paper](https://kenschutte.com/gzip-knn-paper) 
 and [https://kenschutte.com/gzip-knn-paper2](https://kenschutte.com/gzip-knn-paper2)  
-[3] having CPC > 1 is not relevant if there are many categories and few observations for some categories It would require a more subtle implementation, with cpc depending on the number of observations for each class
+[3] having CPC > 1 is not relevant if there are many categories and few observations for some categories. It would require a more subtle implementation, with cpc depending on the number of observations for each class
 
-As shown above, ftcc beats the gzip method on all datasets except R52. 
+As shown above, ftcc beats the *gzip method* on all datasets except R52. 
 For R52, because there are classes with few examples, learning is difficult and the brute force approach of gzip gets the advantage. 
 Still, it is trivial to have the same level of performance by using a compression level of 12 instead of 9 (`python main.py -d R52 -cpc 1 -c ZSTD_CL12`).   
 
 #### Speed
 *Below is just to give an idea. Run on my 2021 intel MacBook Pro, with tons of apps running at the same time. Do your own microbenchmark.*
-The computation is multiple orders of magnitudes faster [A Parameter-Free Classification Method with Compressors](https://github.com/bazingagin/npc_gzip).
+The computation is multiple orders of magnitudes faster than the *gzip method*.
 
 ```
 +------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
