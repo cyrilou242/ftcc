@@ -239,9 +239,9 @@ For smaller datasets, keeping the whole dataset as a dictionary prefix is simple
 
 ### Notes on performance
 In the benchmark above we used a compression level of 9. Compression level can go up to 22. 
-I have observed that compression level up to 18 will give significant performance improvements. It 
-makes training and inference slower though. Try and benchmark yourself if need be. Setting 
-the compression level up to 12 is an easy way to get better accuracy performance with a minor speed deterioration.
+I have observed that compression level up to 12 will almost always yields an accuracy improvement. It 
+makes training and inference slightly slower though. Above 12, the compression takes more time and 
+I could not observe a consistent accuracy improvement.
 
 ## Reproduce
 Requirements
