@@ -118,7 +118,7 @@ def read_torch_text_labels(dataset: list, indices: list):
     return text_list, label_list
 
 
-def load_20news():
+def load_20news(categories=None):
     """
     Loads the 20NewsGroups dataset from `torchtext`.
 
@@ -136,8 +136,8 @@ def load_20news():
             pairs.append((label, text))
         return pairs
 
-    newsgroups_train = fetch_20newsgroups(subset="train")
-    newsgroups_test = fetch_20newsgroups(subset="test")
+    newsgroups_train = fetch_20newsgroups(subset="train", categories=categories)
+    newsgroups_test = fetch_20newsgroups(subset="test", categories=categories)
     train_ds, test_ds = process(newsgroups_train), process(newsgroups_test)
     return train_ds, test_ds
 

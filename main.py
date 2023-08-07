@@ -25,6 +25,8 @@ DATASET_TO_LOADER = {
     # on mac OS, you may have to run something like: ln -s /etc/ssl/* /Library/Frameworks/Python.framework/Versions/3.7/etc/openssl
     # to fix urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1091)>
     "20News": load_20news,
+    # to compare with Max Halford's article https://maxhalford.github.io/blog/text-classification-by-compression/
+    "4News": lambda: load_20news(categories=['alt.atheism', 'talk.religion.misc', 'comp.graphics','sci.space']),
     "R8": lambda: load_reuters(os.path.join(DATA_DIR, "R8")),
     "R52": lambda: load_reuters(os.path.join(DATA_DIR, "R52")),
     "Ohsumed": lambda: load_ohsumed_single_23(os.path.join(DATA_DIR, "ohsumed_single_23")),
