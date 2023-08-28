@@ -307,8 +307,9 @@ To get the full help and see possible values for each parameters, run:
 python main.py --help
 ```
 
+The results are written to ```accuracy_results.csv```, ```speed_results.csv```, and ```size_results.csv```, in addition to being printed to the console.
+
 ## Extend and Contribute
-- ADD: return results as csv, not a printed table lol 
 - ADD: implement dataset download functions. Some seemed broken in https://github.com/bazingagin/npc_gzip
 - pytorch is extremely slow and not necessary in this project, we should remove it
 - once the above is done, we can make this a library

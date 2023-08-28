@@ -1,5 +1,6 @@
 import os
 import time
+import csv
 
 import click
 import numpy as np
@@ -9,6 +10,13 @@ from torchtext.datasets import AG_NEWS, IMDB, AmazonReviewPolarity, DBpedia, Sog
 from compressorclassifier import CompressorClassifier
 from compressors.zstd_compressor import ZstdCompressor
 from data import load_20news, load_ohsumed_single_23, load_reuters, load_kinnews_kirnews
+
+def write_csv(filename, data):
+    headers = [x for x in data[0].keys()]
+    with open(os.path.join(os.getcwd(), filename), mode='w', encoding='utf-8', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=headers)
+        writer.writeheader()
+        writer.writerows(data)
 
 DATA_DIR = "data"
 
@@ -129,13 +137,17 @@ def run_experiment(dataset, compressor, top_k_accuracy, compressors_per_class, s
                     speed_results.append(speed_result)
                     size_results.append(size_result)
 
-    # todo add save in proper tabular format
+    write_csv('accuracy_results.csv', results)
+    write_csv('speed_results.csv', speed_results)
+    write_csv('size_results.csv', size_results)
+
     accuracy_table = markdown_table(results).set_params(float_rounding=3).get_markdown()
     print(accuracy_table)
     speed_table = markdown_table(speed_results).set_params(float_rounding=3).get_markdown()
     print(speed_table)
     size_table = markdown_table(size_results).set_params(float_rounding=0).get_markdown()
     print(size_table)
+
 
 
 if __name__ == '__main__':
