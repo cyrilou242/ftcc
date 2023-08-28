@@ -310,16 +310,14 @@ python main.py --help
 The results are written to ```accuracy_results.csv```, ```speed_results.csv```, and ```size_results.csv```, in addition to being printed to the console.
 
 ## Extend and Contribute
-- ADD: implement dataset download functions. Some seemed broken in https://github.com/bazingagin/npc_gzip
+- add more datasets 
 - pytorch is extremely slow and not necessary in this project, we should remove it
 - once the above is done, we can make this a library
 - add remove stopwords
-- add more compressors! 
-- add more datasets!
-- add ohsumed dataset - https://github.com/bazingagin/npc_gzip/issues/17
-- improve the evaluation loop, it's slow! 
-- improve logs! 
-- predictions are cheap: ensemble!
+- add more compressors
+- improve the evaluation loop, it's slow
+- improve logs
+- predictions are cheap: ensemble
 - optimize the prediction time when CPC > 1
 - improve decision making when CPC > 1
 - the string concatenation is the slowest part in the training. I suspect it could greatly be improved.
